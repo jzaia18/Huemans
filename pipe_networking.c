@@ -12,6 +12,8 @@
     returns the file descriptor for the upstream pipe.
 =========================*/
 int server_setup() {
+
+    printf("[server] making wkp\n");
     // Old mkfifo had a pipe
     if (mkfifo(WELL_KNOWN_PIPE_NAME, 0644) == -1) {
         printf("Error creating from_clients pipe in server handshake!\n");
@@ -47,10 +49,10 @@ int server_connect(int from_client) {
     char buffer[HANDSHAKE_BUFFER_SIZE];
 
     read(from_client, buffer, sizeof(buffer));
-    printf("[server] handshake: received [%s]\n", buffer);
+    printf("[subserver %d] handshake: received [%s]\n", getpid(), buffer);
 
-    remove(WELL_KNOWN_PIPE_NAME);
-    printf("[server] handshake: removed wkp\n");
+    //    remove(WELL_KNOWN_PIPE_NAME);
+    printf("[subserver %d] handshake: removed wkp\n", getpid());
 
     //connect to client, send message
     to_client = open(buffer, O_WRONLY, 0);
@@ -58,7 +60,7 @@ int server_connect(int from_client) {
 
     //read for client
     read(from_client, buffer, sizeof(buffer));
-    printf("[server] handshake received: %s\n", buffer);
+    printf("[subserver %d] handshake received: %s\n", getpid(), buffer);
 
     return to_client;
 }
