@@ -13,18 +13,20 @@
 =========================*/
 int server_setup() {
     // Old mkfifo had a pipe
-    if (mkfifo(WELL_KNOWN_PIPE, 0644) == -1) {
+    if (mkfifo(WELL_KNOWN_PIPE_NAME, 0644) == -1) {
         printf("Error creating from_clients pipe in server handshake!\n");
         exit(1);
     }
 
+    printf("[server] SETUP: opening to_client file\n");
     // i-o-i-o-i (except in this case it's only i so uhhh yeah)
-    int from_client = open(WELL_KNOWN_PIPE, O_RDONLY);
+    int from_client = open(WELL_KNOWN_PIPE_NAME, O_RDONLY);
 
+    printf("[server] SETUP: connection successful!\n");
     // and old mkfifo hated files
     // and the fifo died
     // the end
-    remove(WELL_KNOWN_PIPE);
+    remove(WELL_KNOWN_PIPE_NAME);
 
     return from_client;
 }
@@ -40,8 +42,25 @@ returns the file descriptor for the downstream pipe.
 =========================*/
 int server_connect(int from_client) {
     
-    
-    return to_server;
+    int to_client;
+
+    char buffer[HANDSHAKE_BUFFER_SIZE];
+
+    read(from_client, buffer, sizeof(buffer));
+    printf("[server] handshake: received [%s]\n", buffer);
+
+    remove(WELL_KNOWN_PIPE_NAME);
+    printf("[server] handshake: removed wkp\n");
+
+    //connect to client, send message
+    to_client = open(buffer, O_WRONLY, 0);
+    write(to_client, buffer, sizeof(buffer));
+
+    //read for client
+    read(from_client, buffer, sizeof(buffer));
+    printf("[server] handshake received: %s\n", buffer);
+
+    return to_client;
 }
 
 /*=========================
@@ -97,7 +116,7 @@ int client_handshake(int *to_server) {
 
     //send pp name to server
     printf("[client] handshake: connecting to wkp\n");
-    *to_server = open( "luigi", O_WRONLY, 0);
+    *to_server = open( WELL_KNOWN_PIPE_NAME, O_WRONLY, 0);
     if ( *to_server == -1 )
         exit(1);
 

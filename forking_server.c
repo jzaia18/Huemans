@@ -12,6 +12,15 @@ static void sighandler(int signo) {
 }
 
 int main() {
+    int from_client;
+    while(1) {
+        from_client = server_setup();
+
+        // If child process
+        if (!fork()) {
+            server_connect(from_client);
+        }
+    }
 }
 
 void subserver(int from_client) {
